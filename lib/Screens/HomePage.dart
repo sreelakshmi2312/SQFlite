@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqlite/Models/listModel.dart';
+import 'package:sqlite/Screens/databasehelp.dart';
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
 
+class MyHomePage extends StatefulWidget {
+  
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
     TextEditingController _namecontroller=TextEditingController();
     TextEditingController _agecontroller=TextEditingController();
-
+    DatabaseHelper databasehelper=DatabaseHelper();
+    _init() async{
+    databasehelper.open();
+    databasehelper.getStudents();
+    }
+    @override
+     void initState() async{
+      super.initState();
+       await _init();
+      }
     return Scaffold(
       appBar: AppBar(
         title:Text('Student List',style:TextStyle(color: Colors.black)),
@@ -55,28 +69,41 @@ class MyHomePage extends StatelessWidget {
                 },
               ),
               SizedBox(height:10),
-              ElevatedButton(onPressed:(){
+              ElevatedButton(onPressed:()async{
                 final String name=_namecontroller.text;
                 final String age=_agecontroller.text;
                 StudentModel student=StudentModel(name: name, age: age);
-                
-
-                
-
-              },
+                await databasehelper.insertStudent(student);
+                _namecontroller.clear();
+                _agecontroller.clear();
+                },
               child:Row(children: [
                 Icon(Icons.add),
                 Text('Add Student')
               ],),),
               Expanded(
-                child: ListView.builder( //need to give item count
-                  itemBuilder: ((context, index){
-
-                  } )
-              ),
-              ),
+                 child: ValueListenableBuilder<List<StudentModel>>(
+                 valueListenable: databasehelper.studentlist,
+                 builder: (context, students, _) {
+                 if (students.isEmpty) {
+                 return Center(child: Text('No students in the database.'));
+                 }
+                 return ListView.builder(
+                 itemCount: students.length,
+                 itemBuilder: (context, index) {
+              final StudentModel student = students[index];
+              return ListTile(
+              title: Text(student.name),
+              subtitle: Text('Age: ${student.age}'),
+            );
+              },
+                 );
+                 },
+                 ),
+            ),
       ],
-      )
+      ),
     );
+    
   }
 }
