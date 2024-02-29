@@ -11,23 +11,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  DatabaseHelper databasehelper=DatabaseHelper();
+  @override
+   void initState() {
+  super.initState();
+  _init();
+}
+  Future<void> _init() async {
+  await databasehelper.open();
+  await databasehelper.getStudents();
+}
+
   @override
   Widget build(BuildContext context) {
     TextEditingController _namecontroller=TextEditingController();
     TextEditingController _agecontroller=TextEditingController();
-    DatabaseHelper databasehelper=DatabaseHelper();
-    _init() async{
-    databasehelper.open();
-    databasehelper.getStudents();
-    }
-    @override
-     void initState() async{
-      super.initState();
-       await _init();
-      }
+    
     return Scaffold(
       appBar: AppBar(
-        title:Text('Student List',style:TextStyle(color: Colors.black)),
+        title:Text('Student List',
+        style:TextStyle(color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.red.shade200,
       ),
@@ -49,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return null;
                },
               ),
-              SizedBox(height:10),
+              SizedBox(height:20),
               TextFormField(
                controller: _agecontroller,
                decoration: InputDecoration(
@@ -68,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return null; 
                 },
               ),
-              SizedBox(height:10),
+              SizedBox(height:20),
               ElevatedButton(onPressed:()async{
                 final String name=_namecontroller.text;
                 final String age=_agecontroller.text;
@@ -77,7 +80,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 _namecontroller.clear();
                 _agecontroller.clear();
                 },
-              child:Row(children: [
+              child:Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                 Icon(Icons.add),
                 Text('Add Student')
               ],),),
@@ -95,7 +100,76 @@ class _MyHomePageState extends State<MyHomePage> {
               return ListTile(
               title: Text(student.name),
               subtitle: Text('Age: ${student.age}'),
+              trailing: Container(
+              width: 96,
+             child: Row(
+             children: [
+           IconButton(
+          icon: Icon(Icons.edit),
+          onPressed: () {
+            StudentModel? studentToUpdate = student;
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                TextEditingController _nameController =
+                    TextEditingController();
+                TextEditingController _ageController =
+                    TextEditingController();
+                return AlertDialog(
+                  title: Text('Edit Student'),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _nameController,
+                        decoration: InputDecoration(labelText: 'Name'),
+                      ),
+                      TextField(
+                        controller: _ageController,
+                        decoration: InputDecoration(labelText: 'Age'),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _nameController.clear();
+                        _ageController.clear();
+                      },
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final String name = _nameController.text;
+                        final String age = _ageController.text;
+                        StudentModel student =
+                            StudentModel(id: studentToUpdate.id ?? 0, name: name, age: age);
+                        databasehelper.editStudent(student);
+                        Navigator.of(context).pop(); // Close the dialog
+                      },
+                      child: Text('Save'),
+                    ),
+                  ],
+                );
+              },
             );
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            databasehelper.deleteStudent(student.id ?? 0);
+          },
+        ),
+      ],
+    ),
+  ),
+);
+
               },
                  );
                  },

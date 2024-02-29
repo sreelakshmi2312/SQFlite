@@ -28,9 +28,28 @@ class DatabaseHelper{
 
   Future<List<StudentModel>> getStudents() async {
   final List<Map<String, dynamic>> map = await _db.query('students');
-  return List.generate(map.length, (i) {
-  return StudentModel.fromMap(map[i]);});
+  final List<StudentModel> students = List.generate(map.length, (i) {
+    return StudentModel.fromMap(map[i]);
+  });
+  studentlist.value = students; 
+  return students;
 }
+
+Future<void> editStudent(StudentModel student) async {
+    await _db.update(
+      'students',
+      student.toMap(),
+      where: 'id = ?',
+      whereArgs: [student.id],
+    );
+    await getStudents();
+  }
+
+Future<void> deleteStudent(int studentid) async{
+  await _db.delete('students',where:'id=?',whereArgs:[studentid]);
+  await getStudents();
+}
+
  
 }
 
